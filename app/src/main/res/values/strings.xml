@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">CurrencyConversion</string>
+    <string name="amount">Amount</string>
+    <string name="buying_rate">buying rate</string>
+    <string name="selling_rate">selling rate</string>
+    <string name="from">From</string>
+    <string name="to">To</string>
+    <string name="convert">Convert</string>
+    <string name="error">Error</string>
+
+    <string-array name="currencies">
+        <item>AUD</item>
+        <item>CAD</item>
+        <item>CZK</item>
+        <item>DKK</item>
+        <item>HUF</item>
+        <item>JPY</item>
+        <item>NOK</item>
+        <item>SEK</item>
+        <item>CHF</item>
+        <item>GBP</item>
+        <item>USD</item>
+        <item>BAM</item>
+        <item>EUR</item>
+        <item>PLN</item>
+    </string-array>
+
+</resources>
