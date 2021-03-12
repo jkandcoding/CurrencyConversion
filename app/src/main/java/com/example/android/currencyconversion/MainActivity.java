@@ -1,7 +1,6 @@
 package com.example.android.currencyconversion;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -47,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this, R.array.currencies, android.R.layout.simple_spinner_item);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
         fromSpinner.setAdapter(spinnerAdapter);
         fromSpinner.setOnItemSelectedListener(this);
 
@@ -65,32 +65,62 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void initViewModel() {
         viewModel = new ViewModelProvider(this, new ConvertFactory(getApplication())).get(ConvertViewModel.class);
-        viewModel.getCurrencyRates().observe(this, rates -> {
-            currencyRates = rates;
-            Log.d("hghghg", "activity " + String.valueOf(currencyRates == null));
-        });
+        viewModel.getCurrencyRates().observe(this, rates -> currencyRates = rates);
     }
 
     private void convertBtnPressed() {
         btn_convert_currency.setOnClickListener(view -> {
-            ConvertResponse fromObject = currencyRates.get(turnCurrencyToPosition(fromCurrency));
-            ConvertResponse toObject = currencyRates.get(turnCurrencyToPosition(toCurrency));
+            Double amount;
+            double result;
+            String StringResultForShow;
 
-            Double amount = Double.parseDouble(et_amount.getText().toString().trim());
-            if (amount == null) {
+            // if "amount" of currency for converting is not entered -> set to "1"
+            if (et_amount.getText().toString().trim().isEmpty()) {
                 amount = 1.0;
+                et_amount.setText("1", TextView.BufferType.EDITABLE);
+            } else {
+                amount = Double.parseDouble(et_amount.getText().toString().trim());
             }
 
-            Double result;
-            if (rbtn_buy.isChecked()) {
-                result = amount * fromObject.getBuying_rate() / toObject.getBuying_rate();
+            // if "HRK" is neither fromCurrency or toCurrency
+            if ((turnCurrencyToPosition(fromCurrency) != 14) && (turnCurrencyToPosition(toCurrency) != 14)) {
+                ConvertResponse fromObject = currencyRates.get(turnCurrencyToPosition(fromCurrency));
+                ConvertResponse toObject = currencyRates.get(turnCurrencyToPosition(toCurrency));
+
+                if (rbtn_buy.isChecked()) {
+                    result = amount * fromObject.getSelling_rate() / toObject.getBuying_rate();
+                } else {
+                    result = amount * fromObject.getBuying_rate() / toObject.getSelling_rate();
+                }
+
+            // if "HRK" is fromCurrency
+            } else if ((turnCurrencyToPosition(fromCurrency) == 14) && (turnCurrencyToPosition(toCurrency) != 14)) {
+                ConvertResponse toObject = currencyRates.get(turnCurrencyToPosition(toCurrency));
+
+                if (rbtn_buy.isChecked()) {
+                    result = amount / toObject.getSelling_rate();
+                } else {
+                    result = amount / toObject.getBuying_rate();
+                }
+
+            // if "HRK" is toCurrency
+            } else if ((turnCurrencyToPosition(fromCurrency) != 14) && (turnCurrencyToPosition(toCurrency) == 14)) {
+                ConvertResponse fromObject = currencyRates.get(turnCurrencyToPosition(fromCurrency));
+
+                if (rbtn_buy.isChecked()) {
+                    result = amount * fromObject.getSelling_rate();
+                } else {
+                    result = amount * fromObject.getBuying_rate();
+                }
+
+            // if "HRK" is both fromCurrency and toCurrency
             } else {
-                result = amount * fromObject.getSelling_rate() / toObject.getSelling_rate();
+                result = 0.0;
             }
-            String resultt = String.format("%.2f", result);
 
             try {
-                tv_result.setText(resultt);
+                StringResultForShow = String.format("%.2f", result);
+                tv_result.setText(StringResultForShow);
             } catch (Exception e) {
                 e.printStackTrace();
                 tv_result.setText(R.string.error);
@@ -100,13 +130,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
-        fromCurrency = fromSpinner.getItemAtPosition(position).toString();
-        toCurrency = toSpinner.getItemAtPosition(position).toString();
+        if (adapterView == fromSpinner) {
+            fromCurrency = fromSpinner.getItemAtPosition(position).toString();
+        } else if (adapterView == toSpinner) {
+            toCurrency = toSpinner.getItemAtPosition(position).toString();
+        }
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
-
     }
 
     public int turnCurrencyToPosition(String currency) {
@@ -123,6 +155,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 break;
             case "DKK":
                 position = 3;
+                break;
+            case "HRK":
+                position = 14;
                 break;
             case "HUF":
                 position = 4;
