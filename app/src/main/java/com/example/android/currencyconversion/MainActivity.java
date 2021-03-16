@@ -1,6 +1,7 @@
 package com.example.android.currencyconversion;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -11,10 +12,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.android.currencyconversion.factories.ConvertFactory;
+import com.example.android.currencyconversion.helpers.Helper;
 import com.example.android.currencyconversion.models.ConvertResponse;
+import com.example.android.currencyconversion.models.ConvertResponseWrapper;
 import com.example.android.currencyconversion.viewModels.ConvertViewModel;
 
 import java.util.ArrayList;
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     ConvertViewModel viewModel;
     String fromCurrency;
     String toCurrency;
+    Throwable t;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,65 +70,96 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void initViewModel() {
         viewModel = new ViewModelProvider(this, new ConvertFactory(getApplication())).get(ConvertViewModel.class);
-        viewModel.getCurrencyRates().observe(this, rates -> currencyRates = rates);
+        //  viewModel.getCurrencyRates().observe(this, rates -> currencyRates = rates);
+        viewModel.getRates().observe(this, new Observer<ConvertResponseWrapper>() {
+            @Override
+            public void onChanged(ConvertResponseWrapper convertResponseWrapper) {
+                if (convertResponseWrapper == null) {
+                    Helper.showAlertDialog(MainActivity.this, "Smth went wrong");
+                    // Call is successful
+                } else if (convertResponseWrapper.getError() == null) {
+                    currencyRates = convertResponseWrapper.getRates();
+                    t = null;
+                } else {
+                    // Call failed
+                    currencyRates = null;
+                    t = convertResponseWrapper.getError();
+                }
+            }
+        });
     }
 
     private void convertBtnPressed() {
         btn_convert_currency.setOnClickListener(view -> {
-            Double amount;
+
+            double amount;
             double result;
             String StringResultForShow;
+            ConvertResponse fromObject = null;
+            ConvertResponse toObject = null;
 
-            // if "amount" of currency for converting is not entered -> set to "1"
-            if (et_amount.getText().toString().trim().isEmpty()) {
-                amount = 1.0;
-                et_amount.setText("1", TextView.BufferType.EDITABLE);
+            // if error == null -> proceed
+            if (currencyRates != null) {
+                // if "amount" of currency for converting is not entered -> set to "1"
+                if (et_amount.getText().toString().trim().isEmpty()) {
+                    amount = 1.0;
+                    et_amount.setText("1", TextView.BufferType.EDITABLE);
+                } else {
+                    amount = Double.parseDouble(et_amount.getText().toString().trim());
+                }
+
+                // choosing ConvertResponse object based on spinner's output
+                for (ConvertResponse response : currencyRates) {
+                    if (response.getCurrency_code().equals(fromCurrency)) {
+                        fromObject = response;
+                    }
+                    if (response.getCurrency_code().equals(toCurrency)) {
+                        toObject = response;
+                    }
+                }
+
+                // if "HRK" is neither fromCurrency or toCurrency
+                if (!fromCurrency.equals("HRK") && !toCurrency.equals("HRK")) {
+
+                    if (rbtn_buy.isChecked()) {
+                        result = amount * fromObject.getSelling_rate() / toObject.getBuying_rate();
+                    } else {
+                        result = amount * fromObject.getBuying_rate() / toObject.getSelling_rate();
+                    }
+
+                    // if only fromCurrency is "HRK"
+                } else if (fromCurrency.equals("HRK") && !toCurrency.equals("HRK")) {
+
+                    if (rbtn_buy.isChecked()) {
+                        result = amount / toObject.getSelling_rate();
+                    } else {
+                        result = amount / toObject.getBuying_rate();
+                    }
+
+                    // if only toCurrency is "HRK"
+                } else if (!fromCurrency.equals("HRK") && toCurrency.equals("HRK")) {
+
+                    if (rbtn_buy.isChecked()) {
+                        result = amount * fromObject.getSelling_rate();
+                    } else {
+                        result = amount * fromObject.getBuying_rate();
+                    }
+
+                    // if "HRK" is both fromCurrency and toCurrency
+                } else {
+                    result = 0.0;
+                }
+
+                try {
+                    StringResultForShow = String.format("%.2f", result);
+                    tv_result.setText(StringResultForShow);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    tv_result.setText(R.string.error);
+                }
+                // if error != null -> show alertDialog
             } else {
-                amount = Double.parseDouble(et_amount.getText().toString().trim());
-            }
-
-            // if "HRK" is neither fromCurrency or toCurrency
-            if ((turnCurrencyToPosition(fromCurrency) != 14) && (turnCurrencyToPosition(toCurrency) != 14)) {
-                ConvertResponse fromObject = currencyRates.get(turnCurrencyToPosition(fromCurrency));
-                ConvertResponse toObject = currencyRates.get(turnCurrencyToPosition(toCurrency));
-
-                if (rbtn_buy.isChecked()) {
-                    result = amount * fromObject.getSelling_rate() / toObject.getBuying_rate();
-                } else {
-                    result = amount * fromObject.getBuying_rate() / toObject.getSelling_rate();
-                }
-
-            // if "HRK" is fromCurrency
-            } else if ((turnCurrencyToPosition(fromCurrency) == 14) && (turnCurrencyToPosition(toCurrency) != 14)) {
-                ConvertResponse toObject = currencyRates.get(turnCurrencyToPosition(toCurrency));
-
-                if (rbtn_buy.isChecked()) {
-                    result = amount / toObject.getSelling_rate();
-                } else {
-                    result = amount / toObject.getBuying_rate();
-                }
-
-            // if "HRK" is toCurrency
-            } else if ((turnCurrencyToPosition(fromCurrency) != 14) && (turnCurrencyToPosition(toCurrency) == 14)) {
-                ConvertResponse fromObject = currencyRates.get(turnCurrencyToPosition(fromCurrency));
-
-                if (rbtn_buy.isChecked()) {
-                    result = amount * fromObject.getSelling_rate();
-                } else {
-                    result = amount * fromObject.getBuying_rate();
-                }
-
-            // if "HRK" is both fromCurrency and toCurrency
-            } else {
-                result = 0.0;
-            }
-
-            try {
-                StringResultForShow = String.format("%.2f", result);
-                tv_result.setText(StringResultForShow);
-            } catch (Exception e) {
-                e.printStackTrace();
-                tv_result.setText(R.string.error);
+                Helper.showAlertDialog(this, t.getMessage());
             }
         });
     }
@@ -141,55 +177,4 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onNothingSelected(AdapterView<?> adapterView) {
     }
 
-    public int turnCurrencyToPosition(String currency) {
-        int position = -1;
-        switch (currency) {
-            case "AUD":
-                position = 0;
-                break;
-            case "CAD":
-                position = 1;
-                break;
-            case "CZK":
-                position = 2;
-                break;
-            case "DKK":
-                position = 3;
-                break;
-            case "HRK":
-                position = 14;
-                break;
-            case "HUF":
-                position = 4;
-                break;
-            case "JPY":
-                position = 5;
-                break;
-            case "NOK":
-                position = 6;
-                break;
-            case "SEK":
-                position = 7;
-                break;
-            case "CHF":
-                position = 8;
-                break;
-            case "GBP":
-                position = 9;
-                break;
-            case "USD":
-                position = 10;
-                break;
-            case "BAM":
-                position = 11;
-                break;
-            case "EUR":
-                position = 12;
-                break;
-            case "PLN":
-                position = 13;
-                break;
-        }
-        return position;
-    }
 }
