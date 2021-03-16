@@ -1,5 +1,6 @@
 package com.example.android.currencyconversion.network;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -14,10 +15,6 @@ import retrofit2.Response;
 
 public class ConvertRepository {
 
-    private List<ConvertResponse> listOfRates;
-    private MutableLiveData<List<ConvertResponse>> listOfRatesLiveData = new MutableLiveData<>();
-    private MutableLiveData<Boolean> error = new MutableLiveData<>();
-
     public LiveData<ConvertResponseWrapper> getListOfRates() {
         final MutableLiveData<ConvertResponseWrapper> wrapper = new MutableLiveData<>();
 
@@ -28,16 +25,14 @@ public class ConvertRepository {
         //Execute the request in a background thread
         call.enqueue(new Callback<List<ConvertResponse>>() {
             @Override
-            public void onResponse(Call<List<ConvertResponse>> call, Response<List<ConvertResponse>> response) {
+            public void onResponse(@NonNull Call<List<ConvertResponse>> call, @NonNull Response<List<ConvertResponse>> response) {
                 if (response.isSuccessful()) {
-                   // listOfRates = response.body();
                     wrapper.postValue(new ConvertResponseWrapper(response.body()));
-                  //  callback.onDataGot(listOfRates);
                 }
             }
 
             @Override
-            public void onFailure(Call<List<ConvertResponse>> call, Throwable t) {
+            public void onFailure(@NonNull Call<List<ConvertResponse>> call, @NonNull Throwable t) {
                 //Smth went wrong
                 wrapper.postValue(new ConvertResponseWrapper(t));
             }
@@ -45,17 +40,5 @@ public class ConvertRepository {
         return wrapper;
     }
 
-//    public LiveData<List<ConvertResponse>> getListOfRatesLiveData() {
-//        getListOfRates(new MyCallback() {
-//            @Override
-//            public void onDataGot(List<ConvertResponse> response) {
-//                listOfRatesLiveData.postValue(response);
-//            }
-//        });
-//        return listOfRatesLiveData;
-//    }
-//
-//    public interface MyCallback {
-//        void onDataGot(List<ConvertResponse> response);
-//    }
+
 }

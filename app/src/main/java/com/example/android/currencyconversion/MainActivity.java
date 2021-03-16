@@ -1,7 +1,6 @@
 package com.example.android.currencyconversion;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -11,18 +10,18 @@ import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.android.currencyconversion.factories.ConvertFactory;
 import com.example.android.currencyconversion.helpers.Helper;
 import com.example.android.currencyconversion.models.ConvertResponse;
-import com.example.android.currencyconversion.models.ConvertResponseWrapper;
 import com.example.android.currencyconversion.viewModels.ConvertViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
@@ -39,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     String fromCurrency;
     String toCurrency;
     Throwable t;
+    String StringResultForShow = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,20 +71,17 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private void initViewModel() {
         viewModel = new ViewModelProvider(this, new ConvertFactory(getApplication())).get(ConvertViewModel.class);
         //  viewModel.getCurrencyRates().observe(this, rates -> currencyRates = rates);
-        viewModel.getRates().observe(this, new Observer<ConvertResponseWrapper>() {
-            @Override
-            public void onChanged(ConvertResponseWrapper convertResponseWrapper) {
-                if (convertResponseWrapper == null) {
-                    Helper.showAlertDialog(MainActivity.this, "Smth went wrong");
-                    // Call is successful
-                } else if (convertResponseWrapper.getError() == null) {
-                    currencyRates = convertResponseWrapper.getRates();
-                    t = null;
-                } else {
-                    // Call failed
-                    currencyRates = null;
-                    t = convertResponseWrapper.getError();
-                }
+        viewModel.getRates().observe(this, convertResponseWrapper -> {
+            if (convertResponseWrapper == null) {
+                Helper.showAlertDialog(MainActivity.this, "Smth went wrong");
+                // Call is successful
+            } else if (convertResponseWrapper.getError() == null) {
+                currencyRates = convertResponseWrapper.getRates();
+                t = null;
+            } else {
+                // Call failed
+                currencyRates = null;
+                t = convertResponseWrapper.getError();
             }
         });
     }
@@ -94,7 +91,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             double amount;
             double result;
-            String StringResultForShow;
             ConvertResponse fromObject = null;
             ConvertResponse toObject = null;
 
@@ -151,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
 
                 try {
-                    StringResultForShow = String.format("%.2f", result);
+                    StringResultForShow = String.format(Locale.ENGLISH, "%.2f", result);
                     tv_result.setText(StringResultForShow);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -177,4 +173,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onNothingSelected(AdapterView<?> adapterView) {
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putString("result", StringResultForShow);
+    }
+
+    @Override
+    public void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        StringResultForShow = savedInstanceState.getString("result");
+        tv_result.setText(StringResultForShow);
+    }
 }
