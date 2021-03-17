@@ -6,6 +6,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private Spinner fromSpinner;
     private Spinner toSpinner;
     private RadioButton rbtn_buy;
+    private ProgressBar pb_progress;
 
     ConvertViewModel viewModel;
     String fromCurrency;
@@ -65,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         btn_convert_currency = findViewById(R.id.btn_convert_currency);
         et_amount = findViewById(R.id.et_currency);
         rbtn_buy = findViewById(R.id.rbtn_buying_rate);
+        pb_progress = findViewById(R.id.pb_progress);
     }
 
     private void initViewModel() {
@@ -90,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     // conversion is done and result is sent to ConvertResponseWrapper, then back to activity through viewmodel
     private void convertBtnPressed() {
         btn_convert_currency.setOnClickListener(view -> {
-
+            pb_progress.setVisibility(View.VISIBLE);
             double amount;
             // if "amount" of currency for converting is not entered -> set to "1"
             if (et_amount.getText().toString().trim().isEmpty()) {
@@ -111,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     result = convertResponseWrapper.getResult();
                     StringResultForShow = String.format(Locale.ENGLISH, "%.2f", result);
                     tv_result.setText(StringResultForShow);
+                    pb_progress.setVisibility(View.INVISIBLE);
                     t = null;
                 } else {
                     // Call failed
