@@ -70,16 +70,16 @@ public class ConvertRepository {
                 result = amount * fromObject.getBuying_rate() / toObject.getSelling_rate();
             }
 
-            // if only fromCurrency is "HRK"
+        // if only fromCurrency is "HRK"
         } else if (input.getValue().getFromCurrency().equals("HRK") && !input.getValue().getToCurrency().equals("HRK")) {
 
             if (isBuyingRate) {
-                result = amount / toObject.getSelling_rate();
-            } else {
                 result = amount / toObject.getBuying_rate();
+            } else {
+                result = amount / toObject.getSelling_rate();
             }
 
-            // if only toCurrency is "HRK"
+        // if only toCurrency is "HRK"
         } else if (!input.getValue().getFromCurrency().equals("HRK") && input.getValue().getToCurrency().equals("HRK")) {
 
             if (isBuyingRate) {
@@ -88,10 +88,20 @@ public class ConvertRepository {
                 result = amount * fromObject.getBuying_rate();
             }
 
-            // if "HRK" is both fromCurrency and toCurrency
+        // if "HRK" is both fromCurrency and toCurrency
         } else {
             result = 0.0;
         }
+
+        // if selected currencies are "HUF" or "JPY" result needs correction
+        if (input.getValue().getFromCurrency().equals("HUF") || input.getValue().getFromCurrency().equals("JPY")) {
+            result = result / 100;
+        }
+
+        if (input.getValue().getToCurrency().equals("HUF") || input.getValue().getToCurrency().equals("JPY")) {
+            result = result * 100;
+        }
+
         return result;
     }
 
