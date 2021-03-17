@@ -100,7 +100,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 amount = 1.0;
                 et_amount.setText("1", TextView.BufferType.EDITABLE);
             } else {
-                amount = Double.parseDouble(et_amount.getText().toString().trim());
+                String amountWithCharRemoved = et_amount.getText().toString().trim().replace(",","");
+                amount = Double.parseDouble(amountWithCharRemoved);
+                et_amount.setText(Helper.formatNumberWithThousandsSeparators(amount), TextView.BufferType.EDITABLE);
             }
 
             // send inputs for conversion to repository (amount, fromCurrency, toCurrency, rbtn_buy.isChecked()) and get result back
@@ -112,7 +114,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     // Call is successful, show result
                 } else if (convertResponseWrapper.getError() == null) {
                     result = convertResponseWrapper.getResult();
-                    StringResultForShow = String.format(Locale.ENGLISH, "%.2f", result);
+                   // StringResultForShow = String.format(Locale.ENGLISH, "%.2f", result);
+                    StringResultForShow = Helper.formatNumberWithThousandsSeparators(result);
                     tv_result.setText(StringResultForShow);
                     pb_progress.setVisibility(View.INVISIBLE);
                     t = null;
