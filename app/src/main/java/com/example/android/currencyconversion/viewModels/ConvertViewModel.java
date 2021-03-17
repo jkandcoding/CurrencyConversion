@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 
+import com.example.android.currencyconversion.models.ConvertInputs;
 import com.example.android.currencyconversion.models.ConvertResponseWrapper;
 import com.example.android.currencyconversion.network.ConvertRepository;
 
@@ -21,9 +22,11 @@ public class ConvertViewModel extends AndroidViewModel {
         wraper = new MediatorLiveData<>();
     }
 
-    public LiveData<ConvertResponseWrapper> getRates() {
+    public LiveData<ConvertResponseWrapper> getResult(ConvertInputs inputs) {
+        convertRepository.setInputs(inputs);
         wraper.addSource(convertRepository.getListOfRates(), wraper::setValue);
         return wraper;
     }
+
 
 }

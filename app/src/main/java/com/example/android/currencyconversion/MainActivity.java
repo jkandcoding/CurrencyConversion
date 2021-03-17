@@ -16,16 +16,15 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.android.currencyconversion.factories.ConvertFactory;
 import com.example.android.currencyconversion.helpers.Helper;
-import com.example.android.currencyconversion.models.ConvertResponse;
+import com.example.android.currencyconversion.models.ConvertInputs;
 import com.example.android.currencyconversion.viewModels.ConvertViewModel;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    List<ConvertResponse> currencyRates = new ArrayList<>();
+    // List<ConvertResponse> currencyRates = new ArrayList<>();
+    double result;
 
     private TextView tv_result;
     private EditText et_amount;
@@ -70,96 +69,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void initViewModel() {
         viewModel = new ViewModelProvider(this, new ConvertFactory(getApplication())).get(ConvertViewModel.class);
-        //  viewModel.getCurrencyRates().observe(this, rates -> currencyRates = rates);
-        viewModel.getRates().observe(this, convertResponseWrapper -> {
-            if (convertResponseWrapper == null) {
-                Helper.showAlertDialog(MainActivity.this, "Smth went wrong");
-                // Call is successful
-            } else if (convertResponseWrapper.getError() == null) {
-                currencyRates = convertResponseWrapper.getRates();
-                t = null;
-            } else {
-                // Call failed
-                currencyRates = null;
-                t = convertResponseWrapper.getError();
-            }
-        });
     }
 
-    private void convertBtnPressed() {
-        btn_convert_currency.setOnClickListener(view -> {
-
-            double amount;
-            double result;
-            ConvertResponse fromObject = null;
-            ConvertResponse toObject = null;
-
-            // if error == null -> proceed
-            if (currencyRates != null) {
-                // if "amount" of currency for converting is not entered -> set to "1"
-                if (et_amount.getText().toString().trim().isEmpty()) {
-                    amount = 1.0;
-                    et_amount.setText("1", TextView.BufferType.EDITABLE);
-                } else {
-                    amount = Double.parseDouble(et_amount.getText().toString().trim());
-                }
-
-                // choosing ConvertResponse object based on spinner's output
-                for (ConvertResponse response : currencyRates) {
-                    if (response.getCurrency_code().equals(fromCurrency)) {
-                        fromObject = response;
-                    }
-                    if (response.getCurrency_code().equals(toCurrency)) {
-                        toObject = response;
-                    }
-                }
-
-                // if "HRK" is neither fromCurrency or toCurrency
-                if (!fromCurrency.equals("HRK") && !toCurrency.equals("HRK")) {
-
-                    if (rbtn_buy.isChecked()) {
-                        result = amount * fromObject.getSelling_rate() / toObject.getBuying_rate();
-                    } else {
-                        result = amount * fromObject.getBuying_rate() / toObject.getSelling_rate();
-                    }
-
-                    // if only fromCurrency is "HRK"
-                } else if (fromCurrency.equals("HRK") && !toCurrency.equals("HRK")) {
-
-                    if (rbtn_buy.isChecked()) {
-                        result = amount / toObject.getSelling_rate();
-                    } else {
-                        result = amount / toObject.getBuying_rate();
-                    }
-
-                    // if only toCurrency is "HRK"
-                } else if (!fromCurrency.equals("HRK") && toCurrency.equals("HRK")) {
-
-                    if (rbtn_buy.isChecked()) {
-                        result = amount * fromObject.getSelling_rate();
-                    } else {
-                        result = amount * fromObject.getBuying_rate();
-                    }
-
-                    // if "HRK" is both fromCurrency and toCurrency
-                } else {
-                    result = 0.0;
-                }
-
-                try {
-                    StringResultForShow = String.format(Locale.ENGLISH, "%.2f", result);
-                    tv_result.setText(StringResultForShow);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    tv_result.setText(R.string.error);
-                }
-                // if error != null -> show alertDialog
-            } else {
-                Helper.showAlertDialog(this, t.getMessage());
-            }
-        });
-    }
-
+    // selected currencies from spinners
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
         if (adapterView == fromSpinner) {
@@ -171,6 +83,42 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
+    }
+
+    // when "CONVERT" btn is pressed, amount, selected currencies and buying/selling rate are sent to
+    // repository through viewmodel, network call is fetching new currency rates from hnb,
+    // conversion is done and result is sent to ConvertResponseWrapper, then back to activity through viewmodel
+    private void convertBtnPressed() {
+        btn_convert_currency.setOnClickListener(view -> {
+
+            double amount;
+            // if "amount" of currency for converting is not entered -> set to "1"
+            if (et_amount.getText().toString().trim().isEmpty()) {
+                amount = 1.0;
+                et_amount.setText("1", TextView.BufferType.EDITABLE);
+            } else {
+                amount = Double.parseDouble(et_amount.getText().toString().trim());
+            }
+
+            // send inputs for conversion to repository (amount, fromCurrency, toCurrency, rbtn_buy.isChecked()) and get result back
+            ConvertInputs inputs = new ConvertInputs(amount, fromCurrency, toCurrency, rbtn_buy.isChecked());
+
+            viewModel.getResult(inputs).observe(this, convertResponseWrapper -> {
+                if (convertResponseWrapper == null) {
+                    Helper.showAlertDialog(MainActivity.this, "Smth went wrong");
+                    // Call is successful, show result
+                } else if (convertResponseWrapper.getError() == null) {
+                    result = convertResponseWrapper.getResult();
+                    StringResultForShow = String.format(Locale.ENGLISH, "%.2f", result);
+                    tv_result.setText(StringResultForShow);
+                    t = null;
+                } else {
+                    // Call failed
+                    t = convertResponseWrapper.getError();
+                    Helper.showAlertDialog(MainActivity.this, t.getMessage());
+                }
+            });
+        });
     }
 
     @Override

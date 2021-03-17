@@ -1,27 +1,26 @@
 package com.example.android.currencyconversion.models;
 
-import java.util.List;
-
 public class ConvertResponseWrapper {
-    public List<ConvertResponse> rates;
+
+    public double result;
     private Throwable error;
 
-    public ConvertResponseWrapper(List<ConvertResponse> rates) {
-        this.rates = rates;
+    public ConvertResponseWrapper(double result) {
+        this.result = result;
         this.error = null;
     }
 
     public ConvertResponseWrapper(Throwable error) {
-        this.rates = null;
+        this.result = 0.0;
         this.error = error;
     }
 
-    public List<ConvertResponse> getRates() {
-        return rates;
+    public double getResult() {
+        return result;
     }
 
-    public void setRates(List<ConvertResponse> rates) {
-        this.rates = rates;
+    public void setResult(double result) {
+        this.result = result;
     }
 
     public Throwable getError() {
