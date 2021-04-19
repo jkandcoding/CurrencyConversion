@@ -8,6 +8,11 @@
     <string name="convert">Convert</string>
     <string name="error">Error</string>
     <string name="ok">OK</string>
+    <string name="insert_amount_here">Insert amount here</string>
+    <string name="max_char_length_is">Max character length is </string>
+    <string name="amountText">%s %s = …</string>
+    <string name="resultText">= %s %s</string>
+    <string name="smth_went_wrong">Smth went wrong</string>
 
 
     <string-array name="currencies">

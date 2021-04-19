@@ -5,70 +5,85 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="20dp"
     tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/tv_amount_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
         android:text="@string/amount"
-        app:layout_constraintEnd_toStartOf="@id/tv_from_label"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/et_currency"
-        android:layout_width="wrap_content"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/et_currency_layout"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:inputType="numberSigned|numberDecimal"
-        app:layout_constraintBaseline_toBaselineOf="@+id/sp_from_currency"
-        app:layout_constraintStart_toStartOf="@id/tv_amount_label" />
+        app:boxBackgroundMode="outline"
+        app:boxBackgroundColor="@color/white"
+        android:hint="@string/insert_amount_here"
+        app:counterEnabled="true"
+        app:counterMaxLength="12"
+        app:errorEnabled="true"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintStart_toStartOf="@id/tv_amount_label"
+        app:layout_constraintTop_toBottomOf="@+id/tv_amount_label"
+        >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_currency_editText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberSigned|numberDecimal"
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
         android:id="@+id/tv_from_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:text="@string/from"
-        app:layout_constraintEnd_toStartOf="@+id/tv_to_label"
-        app:layout_constraintStart_toEndOf="@id/tv_amount_label"
-        app:layout_constraintTop_toTopOf="parent" />
+
+        app:layout_constraintStart_toStartOf="@id/sp_from_currency"
+       app:layout_constraintBottom_toTopOf="@id/sp_from_currency"
+         />
 
     <Spinner
         android:id="@+id/sp_from_currency"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="@+id/tv_from_label"
-        app:layout_constraintTop_toBottomOf="@+id/tv_from_label" />
+
+        app:layout_constraintBaseline_toBaselineOf="@id/et_currency_layout"
+        app:layout_constraintStart_toEndOf="@+id/et_currency_layout"
+        app:layout_constraintEnd_toStartOf="@+id/sp_to_currency"
+        />
 
     <TextView
         android:id="@+id/tv_to_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
         android:text="@string/to"
-        app:layout_constraintEnd_toStartOf="@id/rg_rates"
-        app:layout_constraintStart_toEndOf="@+id/tv_from_label"
-        app:layout_constraintTop_toTopOf="parent" />
+
+
+        app:layout_constraintStart_toStartOf="@+id/sp_to_currency"
+        app:layout_constraintBottom_toTopOf="@id/sp_to_currency" />
 
     <Spinner
         android:id="@+id/sp_to_currency"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="@+id/tv_to_label"
-        app:layout_constraintTop_toBottomOf="@+id/tv_to_label" />
+        app:layout_constraintStart_toEndOf="@+id/sp_from_currency"
+        app:layout_constraintEnd_toStartOf="@+id/rg_rates"
+        app:layout_constraintBaseline_toBaselineOf="@id/sp_from_currency"/>
 
     <RadioGroup
         android:id="@+id/rg_rates"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/tv_to_label"
         app:layout_constraintTop_toTopOf="parent">
 
         <RadioButton
@@ -91,18 +106,17 @@
         android:id="@+id/btn_convert_currency"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="40dp"
         android:text="@string/convert"
-        app:layout_constraintEnd_toStartOf="@id/tv_result"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rg_rates" />
+        app:layout_constraintTop_toBottomOf="@+id/et_currency_layout" />
 
     <TextView
         android:id="@+id/tv_result"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="30sp"
         android:textStyle="bold"
+        android:textSize="24sp"
         app:layout_constraintBaseline_toBaselineOf="@+id/btn_convert_currency"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/btn_convert_currency" />
