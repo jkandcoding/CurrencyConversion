@@ -15,18 +15,35 @@ public class ConvertViewModel extends AndroidViewModel {
 
     private final ConvertRepository convertRepository;
     private final MediatorLiveData<ConvertResponseWrapper> wraper;
+    ConvertInputs viewModelInputs;
+    String resultForUI = "";
 
     public ConvertViewModel(@NonNull Application application) {
         super(application);
         convertRepository = new ConvertRepository();
         wraper = new MediatorLiveData<>();
+        viewModelInputs = null;
     }
 
-    public LiveData<ConvertResponseWrapper> getResult(ConvertInputs inputs) {
-        convertRepository.setInputs(inputs);
+    public LiveData<ConvertResponseWrapper> getResult() {
+        convertRepository.setInputs(viewModelInputs);
         wraper.addSource(convertRepository.getListOfRates(), wraper::setValue);
         return wraper;
     }
 
+    public String getResultForUI() {
+        return resultForUI;
+    }
 
+    public void setResultForUI(String resultForUI) {
+        this.resultForUI = resultForUI;
+    }
+
+    public void setViewModelInputs(ConvertInputs viewModelInputs) {
+        this.viewModelInputs = viewModelInputs;
+    }
+
+    public ConvertInputs getViewModelInputs() {
+        return viewModelInputs;
+    }
 }

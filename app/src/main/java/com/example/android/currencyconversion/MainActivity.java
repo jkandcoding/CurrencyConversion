@@ -14,7 +14,6 @@ import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -23,6 +22,8 @@ import com.example.android.currencyconversion.models.ConvertInputs;
 import com.example.android.currencyconversion.viewModels.ConvertViewModel;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+
+import java.util.Objects;
 
 import static com.example.android.currencyconversion.helpers.Helper.formatNumberWithThousandsSeparators;
 import static com.example.android.currencyconversion.helpers.Helper.showAlertDialog;
@@ -46,7 +47,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private String toCurrency;
     private Throwable t;
     private String StringResultForShow = "";
-    private double amount;
     private String amountText;
     private String resultText;
 
@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         initViewModel();
         initViews();
         setErrorOnTextInputEditText();
+        populateUI();
         convertBtnPressed();
         onKeyboardEnterPressed();
 
@@ -114,6 +115,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         });
     }
 
+    // populate UI with data from ConvertViewModel when configuration changes
+    private void populateUI() {
+        if (viewModel.getViewModelInputs() != null) {
+
+            String amountFormated = formatNumberWithThousandsSeparators(viewModel.getViewModelInputs().getAmount());
+            String fromCurrency = viewModel.getViewModelInputs().getFromCurrency();
+            String toCurrency = viewModel.getViewModelInputs().getToCurrency();
+            String resultForUI = viewModel.getResultForUI();
+
+            tv_amount_label.setText(String.format(amountText, amountFormated, fromCurrency));
+            tv_result.setText(String.format(resultText, resultForUI, toCurrency));
+        }
+    }
+
     // selected currencies from spinners
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
@@ -129,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     // when "CONVERT" btn is pressed, amount, selected currencies and buying/selling rate are sent to
-    // repository through viewmodel, network call is fetching new currency rates from hnb,
+    // repository through viewmodel, network call is requesting new currency rates from hnb,
     // conversion is done and result is sent to ConvertResponseWrapper, then back to activity through viewmodel
     private void convertBtnPressed() {
         btn_convert_currency.setOnClickListener(view -> doConversion());
@@ -137,30 +152,32 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void doConversion() {
         //don't perform conversion if et_amount_layout.getEditText().getText() length > et_amount_layout.getCounterMaxLength()
-        if (et_amount_layout.getEditText().getText().toString().trim().length() <= et_amount_layout.getCounterMaxLength()) {
+        if (Objects.requireNonNull(et_amount_layout.getEditText()).getText().toString().trim().length() <= et_amount_layout.getCounterMaxLength()) {
 
             pb_progress.setVisibility(View.VISIBLE);
             // if "amount" of currency for converting is not entered -> set to "1"
+            double amount;
             if (et_amount_layout.getEditText().getText().toString().trim().isEmpty()) {
                 amount = 1.0;
                 et_amount_layout.getEditText().setText("1", TextView.BufferType.EDITABLE);
             } else {
-                String amountWithCharRemoved = et_amount_layout.getEditText().getText().toString().trim().replace(",", "");
-                amount = Double.parseDouble(amountWithCharRemoved);
+                amount = Double.parseDouble(et_amount_layout.getEditText().getText().toString().trim());
             }
-            tv_amount_label.setText(String.format(amountText, formatNumberWithThousandsSeparators(amount), fromCurrency));
+
 
             // send inputs for conversion to repository (amount, fromCurrency, toCurrency, rbtn_buy.isChecked()) -> and get result back
             ConvertInputs inputs = new ConvertInputs(amount, fromCurrency, toCurrency, rbtn_buy.isChecked());
+            viewModel.setViewModelInputs(inputs);
 
-            viewModel.getResult(inputs).observe(this, convertResponseWrapper -> {
+            viewModel.getResult().observe(this, convertResponseWrapper -> {
                 if (convertResponseWrapper == null) {
                     showAlertDialog(MainActivity.this, getString(R.string.smth_went_wrong));
                     // Call is successful, show result
                 } else if (convertResponseWrapper.getError() == null) {
                     result = convertResponseWrapper.getResult();
                     StringResultForShow = formatNumberWithThousandsSeparators(result);
-                    tv_result.setText(String.format(resultText, StringResultForShow, toCurrency));
+                    viewModel.setResultForUI(StringResultForShow);
+                    populateUI();
                     pb_progress.setVisibility(View.INVISIBLE);
                 } else {
                     // Call failed
@@ -180,23 +197,4 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         });
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putDouble("amount", amount);
-        savedInstanceState.putString("result", StringResultForShow);
-        savedInstanceState.putString("fromCurrency", fromCurrency);
-        savedInstanceState.putString("toCurrency", toCurrency);
-    }
-
-    @Override
-    public void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        amount = savedInstanceState.getDouble("amount");
-        StringResultForShow = savedInstanceState.getString("result");
-        fromCurrency = savedInstanceState.getString("fromCurrency");
-        toCurrency = savedInstanceState.getString("toCurrency");
-        tv_amount_label.setText(String.format(amountText, formatNumberWithThousandsSeparators(amount), fromCurrency));
-        tv_result.setText(String.format(resultText, StringResultForShow, toCurrency));
-    }
 }

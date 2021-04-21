@@ -14,6 +14,9 @@ public class ConvertInputs {
         this.isBuyingRate = isBuyingRate;
     }
 
+    public ConvertInputs() {
+    }
+
     public double getAmount() {
         return amount;
     }
@@ -45,4 +48,6 @@ public class ConvertInputs {
     public void setBuyingRate(boolean buyingRate) {
         isBuyingRate = buyingRate;
     }
+
+
 }

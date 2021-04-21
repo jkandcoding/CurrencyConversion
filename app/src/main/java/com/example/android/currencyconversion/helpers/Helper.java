@@ -21,6 +21,7 @@ public class Helper {
     }
 
     public static String formatNumberWithThousandsSeparators (double number) {
+        //DecimalFormat myFormatter = new DecimalFormat("###,###.##");
         DecimalFormat myFormatter = new DecimalFormat("###,###.##");
         return myFormatter.format(number);
     }
